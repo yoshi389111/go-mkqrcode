@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"image/png"
 	"log"
 	"os"
@@ -10,7 +12,21 @@ import (
 )
 
 func main() {
-	qrCode, err := qr.Encode("Hello World", qr.M, qr.Auto)
+	outFile := flag.String("o", "", "output file name")
+	flag.Parse()
+	args := flag.Args()
+	if len(args) != 1 {
+		flag.Usage()
+		os.Exit(1)
+	}
+	if *outFile == "" {
+		fmt.Fprintln(os.Stderr, "output file is required.")
+		os.Exit(1)
+	}
+
+	message := args[0]
+
+	qrCode, err := qr.Encode(message, qr.M, qr.Auto)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -20,7 +36,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	file, err := os.Create("qrcode.png")
+	file, err := os.Create(*outFile)
 	if err != nil {
 		log.Fatal(err)
 	}
