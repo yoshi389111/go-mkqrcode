@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"image/color"
 	"image/png"
 	"log"
 	"os"
@@ -19,10 +20,6 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-	if *outFile == "" {
-		fmt.Fprintln(os.Stderr, "output file is required.")
-		os.Exit(1)
-	}
 
 	message := args[0]
 
@@ -31,19 +28,45 @@ func main() {
 		log.Fatal(err)
 	}
 
-	qrCode, err = barcode.Scale(qrCode, 200, 200)
+	if *outFile != "" {
+		err = outputQrCode(qrCode, 200, *outFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+	} else {
+		black := "\033[40m  \033[0m"
+		white := "\033[47m  \033[0m"
+		printQrCode(qrCode, black, white)
+	}
+}
+
+func outputQrCode(qrCode barcode.Barcode, size int, fileName string) error {
+	qrCode, err := barcode.Scale(qrCode, size, size)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	file, err := os.Create(*outFile)
+	file, err := os.Create(fileName)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer file.Close()
 
 	err = png.Encode(file, qrCode)
-	if err != nil {
-		log.Fatal(err)
+	return err
+}
+
+func printQrCode(qrCode barcode.Barcode, black, white string) {
+	rect := qrCode.Bounds()
+	for y := rect.Min.Y; y < rect.Max.Y; y++ {
+		for x := rect.Min.X; x < rect.Max.X; x++ {
+			if qrCode.At(x, y) == color.Black {
+				fmt.Print(black)
+			} else {
+				fmt.Print(white)
+			}
+		}
+		fmt.Println()
 	}
 }
