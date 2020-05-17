@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"image"
 	"image/color"
@@ -10,36 +9,41 @@ import (
 	"os"
 	"strings"
 
+	"github.com/pborman/getopt/v2"
+
 	"github.com/boombuler/barcode"
 	"github.com/boombuler/barcode/qr"
 )
 
-const versionInfo = "@(#) $Id: mkqrcode.go 0.5.0 2020-05-17 14:59 yoshi389111 Exp $"
-
-func usage() {
-	o := flag.CommandLine.Output()
-	fmt.Fprintf(o, "Usage: %s [options] MESSAGE", flag.CommandLine.Name())
-	flag.PrintDefaults()
-}
+const versionInfo = "@(#) $Id: mkqrcode.go 0.6.0 2020-05-17 15:34 yoshi389111 Exp $"
 
 func main() {
-	outFile := flag.String("o", "", "output file name")
-	margin := flag.Int("m", 4, "margin of QR-code")
-	black := flag.String("b", "", "pattern of black")
-	white := flag.String("w", "", "pattern of white")
-	size := flag.Int("s", 200, "size of QR-code(Image)")
-	optLevel := flag.String("l", "M", "Error correction level [L|M|Q|H]")
-	optEncoding := flag.String("e", "auto", "Encoding of QR-code [auto|numeric|alphanumeric|unicode]")
-	version := flag.Bool("v", false, "show version info")
-	flag.Usage = usage
-	flag.Parse()
-	args := flag.Args()
+	getopt.SetParameters("MESSAGE")
+	outFile := getopt.StringLong("output", 'o', "", "output file name", "FILE")
+	margin := getopt.IntLong("margin", 'm', 4, "margin of QR-code", "NUMBER")
+	black := getopt.StringLong("black", 'b', "", "pattern of black", "STRING")
+	white := getopt.StringLong("white", 'w', "", "pattern of white", "STRING")
+	size := getopt.IntLong("size", 's', 200, "size of QR-code(Image)", "NUMBER")
+	optLevel := getopt.EnumLong("level", 'l',
+		[]string{"L", "M", "Q", "H"},
+		"M", "error correction level", "{L|M|Q|H}")
+	optEncoding := getopt.EnumLong("encoding", 'e',
+		[]string{"auto", "numeric", "alphanumeric", "unicode"},
+		"auto", "encoding of QR-code", "{auto|numeric|alphanumeric|unicode}")
+	version := getopt.BoolLong("version", 'v', "show version info")
+	help := getopt.BoolLong("help", 'h', "show help message")
+	getopt.Parse()
+	args := getopt.Args()
+	if *help {
+		getopt.PrintUsage(os.Stdout)
+		os.Exit(0)
+	}
 	if *version {
 		fmt.Println(versionInfo)
 		os.Exit(0)
 	}
 	if len(args) != 1 {
-		flag.Usage()
+		getopt.Usage()
 		os.Exit(1)
 	}
 	if *margin < 0 {
